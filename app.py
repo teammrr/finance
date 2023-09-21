@@ -205,7 +205,7 @@ def sell():
     """Sell shares of stock"""
 
     if request.method == "GET":
-        symbols = db.execute("SELECT symbol FROM portfolio WHERE user_id = :user_id", user_id=session["user_id"])
+        symbols = db.execute("SELECT DISTINCT symbol FROM portfolio WHERE user_id = :user_id", user_id=session["user_id"])
         return render_template("sell.html", symbols=symbols)
     else:
         user_id = session["user_id"]
@@ -223,8 +223,9 @@ def sell():
         sym_name = lookup(symbol)["name"]
         price = shares * sym_price
 
-        shares_owned = db.execute("SELECT shares FROM portfolio WHERE user_id = ? AND symbol = ?",user_id, symbol)[0]['shares']
+        shares_owned = db.execute("SELECT sum(shares) as total_shares FROM portfolio WHERE user_id = ? AND symbol = ?",user_id, symbol)[0]['total_shares']
         print(shares_owned)
+
 
         if shares > shares_owned:
             return apology("You dont have enough shares")
@@ -240,9 +241,3 @@ def sell():
         db.execute("INSERT INTO history (user_id, symbol, shares, action, price)VALUES(?, ?, ?, ?, ?)",user_id, sym_name, -shares, action, sym_price)
         flash(f"You sold {shares} shares of {symbol} for {usd(price)}!")
         return redirect("/")
-
-
-
-
-
-
